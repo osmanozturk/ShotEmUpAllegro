@@ -10,7 +10,9 @@ SOURCES += main.c \
     coldetect.c
 
 DISTFILES += \
-    sheet.png
+    sheet.png \
+    sheet.xml
+
 
 HEADERS += \
     coldetect.h \

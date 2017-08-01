@@ -52,7 +52,7 @@ int main(void) {
     timer = al_create_timer(1.0 / FPS);
     eventQ = al_create_event_queue();
     sheet = al_load_bitmap("sheet.png");
-    initShip(&player, sheet, NORMAL, BLUE);
+    initShip(&player, sheet, FAST, GREEN);
 
     /*Event Sources*/
     al_register_event_source(eventQ, al_get_timer_event_source(timer));
@@ -63,10 +63,8 @@ int main(void) {
     while (!done) {/*main game loop*/
         al_wait_for_event(eventQ,&input);
 
-        if (input.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
-            done = true;
 
-        else if (input.type == ALLEGRO_EVENT_KEY_DOWN) {
+        if (input.type == ALLEGRO_EVENT_KEY_DOWN) {
             switch (input.keyboard.keycode) {
             case ALLEGRO_KEY_ESCAPE:
                 done = true;
@@ -74,7 +72,21 @@ int main(void) {
             }
         }
 
-        if (redraw && al_is_event_queue_empty(eventQ)) {
+        else if (input.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
+            done = true;
+
+        else if (input.type = ALLEGRO_EVENT_TIMER) {
+            redraw = true;
+        }
+
+
+
+
+
+
+
+
+        if (redraw && al_is_event_queue_empty(eventQ)) {/*Rendering operations*/
 
             redraw = false;
             drawShip(&player);
@@ -111,14 +123,23 @@ void initShip(ship *ship, ALLEGRO_BITMAP *sheet,  SHIPTYPE type,SHIPCOLOR color)
         switch (color) {
         case BLUE:
             al_set_target_bitmap(ship->spr.image);
-            al_draw_bitmap_region(sheet, 224, 832, 99, 75, 0, 0, 0);
+            al_draw_bitmap_region(sheet, 211, 941, ship->spr.w, ship->spr.h, 0, 0, 0);
             al_set_target_backbuffer(display);
             break;
         case GREEN:
+            al_set_target_bitmap(ship->spr.image);
+            al_draw_bitmap_region(sheet, 237, 377, ship->spr.w, ship->spr.h, 0, 0, 0);
+            al_set_target_backbuffer(display);
             break;
         case ORANGE:
+            al_set_target_bitmap(ship->spr.image);
+            al_draw_bitmap_region(sheet, 247, 84, ship->spr.w, ship->spr.h, 0, 0, 0);
+            al_set_target_backbuffer(display);
             break;
         case RED:
+            al_set_target_bitmap(ship->spr.image);
+            al_draw_bitmap_region(sheet, 224, 832, ship->spr.w, ship->spr.h, 0, 0, 0);
+            al_set_target_backbuffer(display);
             break;
         default:
             break;
@@ -126,21 +147,36 @@ void initShip(ship *ship, ALLEGRO_BITMAP *sheet,  SHIPTYPE type,SHIPCOLOR color)
 
         break;
     case FAST:
-        ship->ammo = 7;
         ship->live = true;
-        ship->speed = 10;
+        ship->spr.w = 98;
+        ship->spr.h = 75;
+        ship->spr.image = al_create_bitmap(ship->spr.w, ship->spr.h);
         ship->x = WIDTH / 2;
-        ship->y = 0;
+        ship->y = HEIGHT - (ship->spr.h)/2;
+        ship->ammo = 7;
+        ship->speed = 10;
         ship->bound = WIDTH * 3 / 4;
 
         switch (color) {
         case BLUE:
+            al_set_target_bitmap(ship->spr.image);
+            al_draw_bitmap_region(sheet, 325, 739, ship->spr.w, ship->spr.h, 0, 0, 0);
+            al_set_target_backbuffer(display);
             break;
         case GREEN:
+            al_set_target_bitmap(ship->spr.image);
+            al_draw_bitmap_region(sheet, 346, 75, ship->spr.w, ship->spr.h, 0, 0, 0);
+            al_set_target_backbuffer(display);
             break;
         case ORANGE:
+            al_set_target_bitmap(ship->spr.image);
+            al_draw_bitmap_region(sheet, 336, 309, ship->spr.w, ship->spr.h, 0, 0, 0);
+            al_set_target_backbuffer(display);
             break;
         case RED:
+            al_set_target_bitmap(ship->spr.image);
+            al_draw_bitmap_region(sheet, 325, 0, ship->spr.w, ship->spr.h, 0, 0, 0);
+            al_set_target_backbuffer(display);
             break;
         default:
             break;
@@ -148,21 +184,36 @@ void initShip(ship *ship, ALLEGRO_BITMAP *sheet,  SHIPTYPE type,SHIPCOLOR color)
 
         break;
     case DAMAGE:
-        ship->ammo = 12;
         ship->live = true;
-        ship->speed = 5;
+        ship->spr.w = 112;
+        ship->spr.h = 75;
+        ship->spr.image = al_create_bitmap(ship->spr.w, ship->spr.h);
         ship->x = WIDTH / 2;
-        ship->y = 0;
+        ship->y = HEIGHT - (ship->spr.h)/2;
+        ship->ammo = 12;
+        ship->speed = 5;
         ship->bound = WIDTH * 3 / 4;
 
         switch (color) {
         case BLUE:
+            al_set_target_bitmap(ship->spr.image);
+            al_draw_bitmap_region(sheet, 112, 791, ship->spr.w, ship->spr.h, 0, 0, 0);
+            al_set_target_backbuffer(display);
             break;
         case GREEN:
+            al_set_target_bitmap(ship->spr.image);
+            al_draw_bitmap_region(sheet, 112, 866, ship->spr.w, ship->spr.h, 0, 0, 0);
+            al_set_target_backbuffer(display);
             break;
         case ORANGE:
+            al_set_target_bitmap(ship->spr.image);
+            al_draw_bitmap_region(sheet, 112, 716, ship->spr.w, ship->spr.h, 0, 0, 0);
+            al_set_target_backbuffer(display);
             break;
         case RED:
+            al_set_target_bitmap(ship->spr.image);
+            al_draw_bitmap_region(sheet, 0, 941, ship->spr.w, ship->spr.h, 0, 0, 0);
+            al_set_target_backbuffer(display);
             break;
         default:
             break;
@@ -176,6 +227,6 @@ void initShip(ship *ship, ALLEGRO_BITMAP *sheet,  SHIPTYPE type,SHIPCOLOR color)
     }
 }
 void drawShip(ship *ship) {
-    al_draw_bitmap(ship->spr.image, ship->x,
-                   ship->y, 0); /*Centered for upper left drawing*/
+    al_draw_bitmap(ship->spr.image, ship->x - (ship->spr.w)/2
+                   ,ship->y - (ship->spr.h)/2, 0); /*Centered for upper left drawing*/
 }
