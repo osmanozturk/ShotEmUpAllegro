@@ -6,17 +6,29 @@ CONFIG -= qt
 QMAKE_CFLAGS += -ansi -Wall -pedantic-errors
 
 
-SOURCES += main.c \
-    coldetect.c
+SOURCES += \
+    Sources/animation.c \
+    Sources/coldetect.c \
+    Sources/main.c \
+    Sources/ship.c \
+    Sources/shooting.c
 
 DISTFILES += \
-    sheet.png \
-    sheet.xml
+    Resources/Font/arial.ttf \
+    Resources/Font/Consolas.ttf \
+    Resources/sheet.xml \
+    Resources/Background/blueFilled.png \
+    Resources/Background/starfieldVFilled.png \
+    Resources/redthruster.png \
+    Resources/sheet.png
 
 
 HEADERS += \
-    coldetect.h \
-    structs.h
+    Headers/animation.h \
+    Headers/coldetect.h \
+    Headers/ship.h \
+    Headers/shooting.h \
+    Headers/structs.h
 
 
 LIBS += -L/usr/lib \
@@ -33,4 +45,5 @@ LIBS += -L/usr/lib \
     -lallegro_primitives \
     -lallegro_ttf
 
-INCLUDEPATH += /usr/include/allegro5
+INCLUDEPATH += /usr/include/allegro5 \
+    Headers
