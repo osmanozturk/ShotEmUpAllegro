@@ -8,9 +8,14 @@
 #endif
 
 typedef struct {
-        int x, y;
-        bool live;
-        int speed;
+    int x, y;
+    bool live;
+    int speed;
+    bool exploding;
+
+    sprite *laserSpr;
+    sprite *explosionSpr;
+
 
 }bullet;
 
@@ -18,7 +23,7 @@ typedef struct {
 Initializes lasers as false and assigns speed values
 ====================================================================================================*/
 
-void initLaser (bullet laser[], int amount);
+void initLaser (bullet laser[], int amount, sprite *laserSpr, sprite *explosionSpr);
 
 
 
@@ -37,4 +42,4 @@ Draws lasers but drawing lasers little bit back from ship's nose causes late sho
 that should be investigated later
 ====================================================================================================*/
 
-void drawLaser (bullet laser[], int amount, sprite *laserSprite);
+void drawLaser (bullet laser[], int amount);

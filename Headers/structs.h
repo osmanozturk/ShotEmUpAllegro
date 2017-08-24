@@ -21,16 +21,9 @@ typedef struct {
         bool live;
         int ammo;
         int bound;
+        int lives;
         sprite spr;
 }ship;
 
-typedef struct {
-        int speed;
-        int colx, coly;
-        int x, y;
-        bool live;
-        int ammo;
-        int amount;
 
-}comet;
 

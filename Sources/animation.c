@@ -50,7 +50,7 @@ void initAnimation(sprite *spr, int maxF, int delayTick, float drawCenterX, floa
 
 }
 
-void drawAnimation(sprite *spr, int drawX, int drawY) {
+bool drawAnimation(sprite *spr, int drawX, int drawY, bool loop) {
     spr->delayCount++;
 
     if (spr->delayCount >= spr->delayTick) {
@@ -58,11 +58,23 @@ void drawAnimation(sprite *spr, int drawX, int drawY) {
         spr->current++;
     }
 
-    if (spr->current >= spr->maxFrame)
-        spr->current = 0;
+    if (spr->current >= spr->maxFrame) {
+            /*loop implementation*/
+        if (loop)
+            spr->current = 0;
+        else
+            spr->current = -1;
+    }
 
-    al_draw_bitmap_region(spr->image, spr->current*spr->w, 0, spr->w, spr->h, drawX, drawY ,0);
 
+
+    if (spr->current >= 0) {
+        al_draw_bitmap_region(spr->image, spr->current*spr->w, 0, spr->w, spr->h, drawX, drawY ,0);
+        return false;
+        /*for checking the end of non-looping animations*/
+    }
+    else
+        return true;
 }
 
 

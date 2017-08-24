@@ -20,9 +20,9 @@
 #define WIDTH 600
 #define HEIGHT 900
 #define FPS 60
-#define MAXLASER 10
-#define LASERDELAY 15
-#define MAXENEMY 45
+#define MAXLASER 20
+#define LASERDELAY 10
+#define MAXENEMY 30
 /*typedef enum  { false,true }bool;*/
 
 enum KEYS{ UP, DOWN, LEFT, RIGHT, SPACE, ESC } ;
@@ -44,6 +44,9 @@ int main(void) {
     float gameTime = 0;
     int frames = 0;
     int gameFPS = 0;
+    int enemyDensity = 30;
+    int densityCounter = 0;
+
 
     /*=============================
     ALLEGRO VARIABLES
@@ -63,8 +66,8 @@ int main(void) {
     GAME VARIABLES
     =============================*/
     ship player;
-    sprite thruster;
-    sprite laserSpr;
+    sprite thruster,laserSpr,laserExpSpr;
+    /*sprite laserSpr;*/
     bullet *laser = NULL;
     background bg, fg;
 
@@ -111,15 +114,16 @@ int main(void) {
 
     initShip(&player, sheet, NORMAL, BLUE, display);
     initAnimation(&thruster, 20, 2, 20, 0,"Resources/redthruster.png");
-    initLaser(laser, MAXLASER);
-    initSpriteFromSheet(&laserSpr, 858, 475, 9, 37, 4.5, 0, sheet, display, 1, 1);
+    initSpriteFromSheet(&laserSpr, 858, 475, 9, 37, 4.5, 0, sheet, display, 1, 0.8);
+    initSpriteFromSheet(&laserExpSpr, 740, 724, 37, 37, 13.5, 13.5, sheet, display, 0.5, 0.5);
+    initLaser(laser, MAXLASER, &laserSpr, &laserExpSpr);
     initBackground(&bg, 0, HEIGHT, 1, 1, 0, 1, "Resources/Background/blueFilled.png");
     initBackground(&fg, 0, HEIGHT, 1, 1, 0, 2, "Resources/Background/starfieldVFilled.png");
     initEnemyShip(enemy, MAXENEMY, sheet, STATIC, EBLACK, display);
 
-    al_set_sample_instance_gain(laserInstance, 0.3);
+    al_set_sample_instance_gain(laserInstance, 0.35);
     al_set_sample_instance_speed(laserInstance, 2.1);
-    al_set_sample_instance_length(laserInstance, 22153);
+    al_set_sample_instance_length(laserInstance, 14768);
     al_set_sample_instance_playmode(laserInstance, ALLEGRO_PLAYMODE_ONCE);
     al_attach_sample_instance_to_mixer(laserInstance,al_get_default_mixer());
 
@@ -274,41 +278,52 @@ int main(void) {
                     player.x = WIDTH - player.spr.w/2;
             }
 
+            if (player.lives == 0)
+                setState(&gameState, GAMEOVER, &bgmID);
 
             updateLaser(laser, MAXLASER, &laserDelayCount, LASERDELAY, &player, laserInstance);
-            /*al_play_sample(laserSound,1,0,6.33,ALLEGRO_PLAYMODE_ONCE,NULL);*/
+            updateEnemyShip(enemy, MAXENEMY, WIDTH, HEIGHT, enemyDensity, &densityCounter);
             updateBackground(&bg, HEIGHT);
             updateBackground(&fg, HEIGHT);
-            updateEnemyShip(enemy,MAXENEMY, WIDTH, HEIGHT);
 
-/*==============================================Enemy collision with ship================================================*/            for (i=0; i<MAXENEMY; i++) {
+
+/*==============================================Enemy collision with laser================================================*/
+
+            for (i=0; i<MAXENEMY; i++) {
+                for (j=0; j<MAXLASER; j++) {
+                    if (enemy[i]->live && laser[j].live &&
+                            colliding(&enemy[i]->spr, &laserSpr, enemy[i]->x, enemy[i]->y, laser[j].x, laser[j].y)) {
+                        laser[j].live =false;
+                        enemy[i]->live = false;
+                        laser[j].exploding = true;
+                        laser[j].explosionSpr->current = 0;
+                        break;
+                    }
+                }
+            }
+
+/*------------------------------------------------------------------------------------------------------------------------------*/
+
+
+
+
+
+
+
+
+/*==============================================Enemy collision with ship================================================*/
+            for (i=0; i<MAXENEMY; i++) {
                 if (enemy[i]->y+enemy[i]->spr.h > player.bound && enemy[i]->live) {
                     /*if enemies are not inside of ship bound they can't collide*/
                     if (colliding(&player.spr, &enemy[i]->spr,/*giving upper left corners for all of the sprites*/
                                   player.x - player.spr.w/2, player.y - player.spr.h/2, enemy[i]->x, enemy[i]->y)) {
                         enemy[i]->live=false;
+                        player.lives--;
+
                     }
                 }
             }
-/*==============================================Enemy collision with laser================================================*/
-
-
-        for (i=0; i<MAXENEMY; i++) {
-            for (j=0; j<MAXLASER; j++) {
-                if (enemy[i]->live && laser[j].live &&
-                        colliding(&enemy[i]->spr, &laserSpr, enemy[i]->x, enemy[i]->y, laser[j].x, laser[j].y)) {
-                    laser[j].live =false;
-                    enemy[i]->live = false;
-                    break;
-
-
-                }
-
-            }
-
-        }
-
-
+/*==============================================Enemy collision with ship================================================*/
 
         }
 
@@ -330,6 +345,8 @@ int main(void) {
             if(al_current_time() - gameTime >= 1) {
                 gameTime = al_current_time();
                 gameFPS = frames;
+                drawAnimation(&thruster,player.x - thruster.drawCenterX, player.y + player.spr.h/2, true);
+                drawEnemyShip(enemy,MAXENEMY);
                 frames = 0;
             }
 
@@ -338,8 +355,8 @@ int main(void) {
             drawBackground(&bg);
             drawBackground(&fg);
             al_draw_textf(arial18, al_map_rgb(255,255,255), 0, 0, 0, "FPS:%d",gameFPS);
-            drawAnimation(&thruster,player.x - thruster.drawCenterX, player.y + player.spr.h/2);
-            drawLaser(laser, MAXLASER, &laserSpr);
+            drawAnimation(&thruster,player.x - thruster.drawCenterX, player.y + player.spr.h/2, true);
+            drawLaser(laser, MAXLASER);
             drawEnemyShip(enemy,MAXENEMY);
             drawShip(&player);
 
@@ -414,11 +431,12 @@ void setState (int *gameState, int targetState, ALLEGRO_SAMPLE_ID *bgmID) {
     case MENU:
         printf("exiting menu\n");
 
+
         break;
 
     case GAME:
         printf("exiting game\n");
-        al_stop_sample(bgmID);
+
 
         break;
 
@@ -442,6 +460,7 @@ void setState (int *gameState, int targetState, ALLEGRO_SAMPLE_ID *bgmID) {
 
     case GAMEOVER:
         printf("getting to gameover\n");
+        al_stop_sample(bgmID);
         break;
     default:
         printf("this is not a valid state for changing\n");

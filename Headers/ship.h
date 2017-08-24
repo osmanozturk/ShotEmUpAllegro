@@ -43,5 +43,9 @@ Can be merged into initShip function later
 ====================================================================================================*/
 
 void initEnemyShip(ship **ship, int amount, ALLEGRO_BITMAP *sheet,  ENEMYTYPE type, ENEMYCOLOR color, ALLEGRO_DISPLAY *display);
-void updateEnemyShip(ship **ship, int amount, int screenW, int screenH);
+void updateEnemyShip(ship **ship, int amount, int screenW, int screenH, int enemyDensity, int *densityCounter);
 void drawEnemyShip(ship **ship, int amount);
+
+
+
+

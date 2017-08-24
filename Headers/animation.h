@@ -43,9 +43,11 @@ void initAnimation(sprite *spr, int maxF, int delayTick, float drawCenterX, floa
 /*====================================================================================================
 Draws animation sprite with desired frame delay, sprite itself contains that values, drawX and drawY
 contains drawing point of the sprite, ex: thruster animation is drawing from center of its top.
+
+if the animation is not looping returns true when animation ends
 ====================================================================================================*/
 
-void drawAnimation(sprite *spr, int drawX, int drawY);
+bool drawAnimation(sprite *spr, int drawX, int drawY, bool loop);
 
 
 

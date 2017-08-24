@@ -39,6 +39,7 @@ void initShip(ship *ship, ALLEGRO_BITMAP *sheet,  SHIPTYPE type, SHIPCOLOR color
         ship->ammo = 10;
         ship->speed = 7;
         ship->bound = height * 5 / 8;
+        ship->lives = 3;
 
         switch (color) {
         case BLUE:
@@ -68,6 +69,7 @@ void initShip(ship *ship, ALLEGRO_BITMAP *sheet,  SHIPTYPE type, SHIPCOLOR color
         ship->ammo = 7;
         ship->speed = 10;
         ship->bound = height * 5 / 8;
+        ship->lives = 3;
 
         switch (color) {
         case BLUE:
@@ -97,6 +99,7 @@ void initShip(ship *ship, ALLEGRO_BITMAP *sheet,  SHIPTYPE type, SHIPCOLOR color
         ship->ammo = 12;
         ship->speed = 5;
         ship->bound = height * 5 / 8;
+        ship->lives = 3;
 
         switch (color) {
         case BLUE:
@@ -208,37 +211,31 @@ void initEnemyShip(ship **ship, int amount,  ALLEGRO_BITMAP *sheet,  ENEMYTYPE t
 }
 
 
-void updateEnemyShip(ship **ship, int amount, int screenW, int screenH) {
+void updateEnemyShip(ship **ship, int amount, int screenW, int screenH, int enemyDensity, int *densityCounter) {
     int i,random;
 
 
     srand(time(NULL));
+    *densityCounter +=1;
 
     for (i=0; i<amount; i++) {
-        random = rand() % 500;
         ship[i]->y += ship[i]->speed;
-
+        random = rand() % 100; /*randomizing spawn process a little*/
 
 
         if (ship[i]->live && ship[i]->y > screenH) {
 
-            ship[i]->live=false;
-            /*ship[i]->y = - (ship[i]->spr.h)/2;
-            ship[i]->x = ( (rand() % (screenW - 2*ship[i]->spr.w)) +ship[i]->spr.w );*/
+            ship[i]->live = false;
+
         }
 
-        else if (!ship[i]->live && ship[i]->y > screenH && random < 15) {/*screenh rule prevents from instant respawning*/
+        else if (!ship[i]->live && ship[i]->y > screenH && random  < 10 && *densityCounter >= enemyDensity ) {
+            /*screenh rule prevents instant respawning*/
+
             ship[i]->y = - (ship[i]->spr.h)/2;
             ship[i]->x = ( (rand() % (screenW - 2*ship[i]->spr.w)) +ship[i]->spr.w );
-            /*for (j=0; j<amount; j++) {
-                if (i != j && ship[j]->live &&
-                        boxCollision(&ship[i]->spr, &ship[j]->spr, ship[i]->x, ship[i]->y, ship[j]->x, ship[j]->y) ) {
-                    inside = true;
-                    break;
-                }
-            }
-                if (!inside) */
             ship[i]->live = true;
+            *densityCounter = 0;
 
 
 
@@ -258,3 +255,11 @@ void drawEnemyShip(ship **ship, int amount) {
             al_draw_bitmap(ship[i]->spr.image, ship[i]->x, ship[i]->y, 0);
     }
 }
+
+
+
+
+
+
+
+
