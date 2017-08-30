@@ -7,11 +7,14 @@
 #include "structs.h"
 #endif
 
+#include <allegro5/allegro_audio.h>
+
 typedef struct {
     int x, y;
     bool live;
     int speed;
     bool exploding;
+    int direction;
 
     sprite *laserSpr;
     sprite *explosionSpr;
@@ -23,9 +26,18 @@ typedef struct {
 Initializes lasers as false and assigns speed values
 ====================================================================================================*/
 
-void initLaser (bullet laser[], int amount, sprite *laserSpr, sprite *explosionSpr);
+void initLaser (bullet laser[], int amount, sprite *laserSpr, sprite *explosionSpr, int direction);
 
 
+
+
+/*====================================================================================================
+shoots laser according to given delay actual shooting process is handling by updatelaser this function
+simply just creates them
+====================================================================================================*/
+
+void shootLaser (bullet laser[], int amount, int *delayCounter, int screenH, int posX, int posY,
+                  int firingDelay, ALLEGRO_SAMPLE_INSTANCE *shootingSound);
 
 
 /*====================================================================================================
@@ -33,7 +45,7 @@ Shoots a laser according to delay and updates the position of already shot laser
 frames considering constant 60 fps and drawing point can be included to prototype
 ====================================================================================================*/
 
-void updateLaser (bullet laser[], int amount, int *delayCounter, int firingDelay, ship *ship, ALLEGRO_SAMPLE_INSTANCE *shootingSound);
+void updateLaser (bullet laser[], int amount, int screenH);
 
 
 
@@ -42,4 +54,4 @@ Draws lasers but drawing lasers little bit back from ship's nose causes late sho
 that should be investigated later
 ====================================================================================================*/
 
-void drawLaser (bullet laser[], int amount);
+void drawLaser (bullet *laser, int amount);

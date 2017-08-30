@@ -1,4 +1,4 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdlib.h>
 
 #include <allegro5/allegro.h>
@@ -9,20 +9,34 @@
 #include <allegro5/allegro_audio.h>
 #include <allegro5/allegro_acodec.h>
 
+#include <stdlib.h>
+#include <time.h>
+
 #include "coldetect.h"
 #ifndef STRUCTS_H
 #include "structs.h"
 #endif
+
+#ifndef SHIP_H
 #include "ship.h"
+#endif
+
+#ifndef ANIMATION_H
 #include "animation.h"
+#endif
+
+#ifndef SHOOTING_H
 #include "shooting.h"
+#endif
+
 
 #define WIDTH 600
 #define HEIGHT 900
 #define FPS 60
-#define MAXLASER 20
-#define LASERDELAY 10
+#define MAXLASER 10
+#define LASERDELAY 15
 #define MAXENEMY 30
+#define MAXTYPE 5
 /*typedef enum  { false,true }bool;*/
 
 enum KEYS{ UP, DOWN, LEFT, RIGHT, SPACE, ESC } ;
@@ -36,7 +50,7 @@ int main(void) {
 
     /*variables*/
     bool redraw = false;
-    bool pressed[5] = {false,false,false,false,false,false};
+    bool pressed[6] = {false,false,false,false,false,false};
     int gameState = -1;
     int laserDelayCount = 0;
     bool destroyed = false;
@@ -44,7 +58,7 @@ int main(void) {
     float gameTime = 0;
     int frames = 0;
     int gameFPS = 0;
-    int enemyDensity = 30;
+    int enemyDensity = 27;
     int densityCounter = 0;
 
 
@@ -67,11 +81,12 @@ int main(void) {
     =============================*/
     ship player;
     sprite thruster,laserSpr,laserExpSpr;
+    sprite enemyLsrSpr,enemyLsrExpSpr;
     /*sprite laserSpr;*/
     bullet *laser = NULL;
     background bg, fg;
 
-    ship **enemy = NULL;
+    enemyShip **enemy = NULL;
 
 
     /*=============================
@@ -100,10 +115,9 @@ int main(void) {
     sheet = al_load_bitmap("Resources/sheet.png");
     arial18 = al_load_font("Resources/Font/arial.ttf",18,0);
     laser = (bullet*)malloc(sizeof(bullet)*MAXLASER);
-    enemy = (ship**)malloc(sizeof(ship*)*MAXENEMY);
-    for (i=0; i<MAXENEMY; i++) {
-        enemy[i] = (ship*)malloc(sizeof(ship));
-    }
+    enemy = (enemyShip**)malloc(sizeof(enemyShip*)*MAXENEMY);
+
+
 
     al_reserve_samples(5);
     bgm = al_load_sample("Resources/Audio/Music/DST-RailJet [qubodup short-cut loop].ogg");
@@ -116,16 +130,28 @@ int main(void) {
     initAnimation(&thruster, 20, 2, 20, 0,"Resources/redthruster.png");
     initSpriteFromSheet(&laserSpr, 858, 475, 9, 37, 4.5, 0, sheet, display, 1, 0.8);
     initSpriteFromSheet(&laserExpSpr, 740, 724, 37, 37, 13.5, 13.5, sheet, display, 0.5, 0.5);
-    initLaser(laser, MAXLASER, &laserSpr, &laserExpSpr);
+    initLaser(laser, MAXLASER, &laserSpr, &laserExpSpr, -1);
+    /*----------------------------------------EnemyLaser--------------------------------------------*/
+    initSpriteFromSheet(&enemyLsrSpr, 856, 983, 9, 37, 4.5, 0, sheet, display, 1, 0.7);
+    initSpriteFromSheet(&enemyLsrExpSpr, 580, 661, 48, 46, 24, 23, sheet, display, 0.5, 0.5);
+
+
     initBackground(&bg, 0, HEIGHT, 1, 1, 0, 1, "Resources/Background/blueFilled.png");
     initBackground(&fg, 0, HEIGHT, 1, 1, 0, 2, "Resources/Background/starfieldVFilled.png");
-    initEnemyShip(enemy, MAXENEMY, sheet, STATIC, EBLACK, display);
+    /*initEnemyShip(enemy, MAXENEMY, sheet, display);*/
 
     al_set_sample_instance_gain(laserInstance, 0.35);
     al_set_sample_instance_speed(laserInstance, 2.1);
     al_set_sample_instance_length(laserInstance, 14768);
     al_set_sample_instance_playmode(laserInstance, ALLEGRO_PLAYMODE_ONCE);
     al_attach_sample_instance_to_mixer(laserInstance,al_get_default_mixer());
+
+
+    for (i=0; i<MAXENEMY; i++) {
+        enemy[i] = (enemyShip*)malloc(sizeof(enemyShip));
+        enemy[i]->spr.image = NULL;
+        initEnemyShip(enemy[i], sheet, display, &enemyLsrSpr, &enemyLsrExpSpr, laserInstance);
+    }
 
 
     /*=============================
@@ -135,7 +161,7 @@ int main(void) {
     al_register_event_source(eventQ, al_get_keyboard_event_source());
     al_register_event_source(eventQ, al_get_display_event_source(display));
 
-
+    srand(time(NULL));
     al_hide_mouse_cursor(display);
     al_start_timer(timer);
     gameTime = al_current_time();
@@ -278,14 +304,51 @@ int main(void) {
                     player.x = WIDTH - player.spr.w/2;
             }
 
+
+            if (pressed[SPACE]) {
+                shootLaser(laser, MAXLASER, &laserDelayCount, HEIGHT, player.x, player.y, LASERDELAY, laserInstance);
+            }
+
             if (player.lives == 0)
                 setState(&gameState, GAMEOVER, &bgmID);
 
-            updateLaser(laser, MAXLASER, &laserDelayCount, LASERDELAY, &player, laserInstance);
-            updateEnemyShip(enemy, MAXENEMY, WIDTH, HEIGHT, enemyDensity, &densityCounter);
+            updateLaser(laser, MAXLASER, HEIGHT);
+            updateEnemyShip(enemy, MAXENEMY, WIDTH, HEIGHT, enemyDensity, &densityCounter, sheet, display,
+                            &enemyLsrSpr, &enemyLsrExpSpr, laserInstance);
             updateBackground(&bg, HEIGHT);
             updateBackground(&fg, HEIGHT);
 
+
+
+        }
+
+
+        else if (input.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
+            setState(&gameState, GAMEOVER, &bgmID);
+        else if (pressed[ESC])
+            setState(&gameState, GAMEOVER, &bgmID);
+
+
+/*==============================================Player collision with laser================================================
+
+            for (i=0; i<MAXENEMY; i++) {
+                if(enemy[i]->type == FIRING_STATIC) {
+
+                    for (j=0; j<enemy[i]->laserAmount; j++) {
+                        if (enemy[i]->laser[j].live &&
+                                colliding(&player.spr, enemy[i]->laser[j].laserSpr, player.x, player.y,
+                                          enemy[i]->laser[j].x, enemy[i]->laser[j].y)) {
+                            enemy[i]->laser[j].live =false;
+                            player.lives -= 1;
+                            enemy[i]->laser[j].exploding = true;
+                            enemy[i]->laser[j].explosionSpr->current = 0;
+                            break;
+                        }
+                    }
+                }
+            }
+
+------------------------------------------------------------------------------------------------------------------------------*/
 
 /*==============================================Enemy collision with laser================================================*/
 
@@ -304,13 +367,6 @@ int main(void) {
 
 /*------------------------------------------------------------------------------------------------------------------------------*/
 
-
-
-
-
-
-
-
 /*==============================================Enemy collision with ship================================================*/
             for (i=0; i<MAXENEMY; i++) {
                 if (enemy[i]->y+enemy[i]->spr.h > player.bound && enemy[i]->live) {
@@ -324,18 +380,6 @@ int main(void) {
                 }
             }
 /*==============================================Enemy collision with ship================================================*/
-
-        }
-
-
-        else if (input.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
-            setState(&gameState, GAMEOVER, &bgmID);
-        else if (pressed[ESC])
-            setState(&gameState, GAMEOVER, &bgmID);
-
-
-
-
                 /*=============================
                       RENDERING OPERATIONS
                 =============================*/
@@ -357,6 +401,11 @@ int main(void) {
             al_draw_textf(arial18, al_map_rgb(255,255,255), 0, 0, 0, "FPS:%d",gameFPS);
             drawAnimation(&thruster,player.x - thruster.drawCenterX, player.y + player.spr.h/2, true);
             drawLaser(laser, MAXLASER);
+            for (i=0;i<MAXENEMY;i++) {
+                if (enemy[i]->live && enemy[i]->type == FIRING_STATIC)
+                    drawLaser(enemy[i]->laser, enemy[i]->laserAmount);
+
+            }
             drawEnemyShip(enemy,MAXENEMY);
             drawShip(&player);
 
@@ -405,6 +454,7 @@ int main(void) {
             /*============================*/
             free(laser);
             for (i=0; i<MAXENEMY; i++) {
+                free(enemy[i]->laser);
                 free(enemy[i]);
             }
             free(enemy);

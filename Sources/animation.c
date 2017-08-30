@@ -30,9 +30,12 @@ void initSpriteFromSheet(sprite *spr, int posX, int posY, int w, int h,
 
     spr->drawCenterX = drawCenterX;
     spr->drawCenterY = drawCenterY;
-
+    spr->scaleX = scaleX;
+    spr->scaleY = scaleY;
 
 }
+
+
 
 
 void initAnimation(sprite *spr, int maxF, int delayTick, float drawCenterX, float drawCenterY, char filename[]) {
