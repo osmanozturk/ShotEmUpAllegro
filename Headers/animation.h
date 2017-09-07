@@ -17,6 +17,12 @@ typedef struct {
 
 }background;
 
+/*====================================================================================================
+Initializes single frame sprite from given file
+====================================================================================================*/
+
+void initSpriteFromFile(sprite *spr, float drawCenterX, float drawCenterY, char *filename,
+                         ALLEGRO_DISPLAY *display, float scaleX, float scaleY, float angle);
 
 
 /*====================================================================================================

@@ -3,6 +3,46 @@
 #include "animation.h"
 /*#include "structs.h"*/
 
+void initSpriteFromFile(sprite *spr, float drawCenterX, float drawCenterY, char *filename,
+                         ALLEGRO_DISPLAY *display, float scaleX, float scaleY, float angle) {
+
+    ALLEGRO_TRANSFORM firstTrans, scaler;
+    ALLEGRO_BITMAP *file;
+    int w,h;
+    file = al_load_bitmap(filename);
+
+    w = al_get_bitmap_width(file);
+    h = al_get_bitmap_height(file);
+
+    al_copy_transform(&firstTrans, al_get_current_transform());
+    al_identity_transform(&scaler);
+    al_scale_transform(&scaler,scaleX, scaleY);
+    /*drawing sprite*/
+    spr->image = al_create_bitmap(w,h);
+    al_set_target_bitmap(spr->image);
+
+
+    al_use_transform(&scaler);
+    al_draw_rotated_bitmap(file, w/2, h/2, w/2, h/2, angle, 0);
+    al_use_transform(&firstTrans);
+    al_set_target_backbuffer(display);
+
+    spr->delayTick = 0;
+    spr->maxFrame = 1;
+    spr->w = w;
+    spr->h = h;
+    spr->current = 0;
+    spr->delayCount = 0;
+
+    spr->drawCenterX = drawCenterX;
+    spr->drawCenterY = drawCenterY;
+    spr->scaleX = scaleX;
+    spr->scaleY = scaleY;
+
+    al_destroy_bitmap(file);
+
+}
+
 void initSpriteFromSheet(sprite *spr, int posX, int posY, int w, int h,
                          float drawCenterX, float drawCenterY, ALLEGRO_BITMAP *sheet,
                          ALLEGRO_DISPLAY *display, float scaleX, float scaleY) {

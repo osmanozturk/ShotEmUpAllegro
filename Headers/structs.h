@@ -7,7 +7,8 @@
 
 typedef enum  { DAMAGE, FAST, NORMAL}SHIPTYPE;
 typedef enum  { BLUE, GREEN, ORANGE, RED}SHIPCOLOR;
-typedef enum  { STATIC, FIRING_STATIC, MISSILE_STATIC, FIRING_DYNAMIC, FOLLOWING_DYNAMIC}ENEMYTYPE;
+typedef enum  { STATIC, FIRING_STATIC, FIRING_DYNAMIC,
+                MISSILE_STATIC, FOLLOWING_DYNAMIC, NOT_INITIALIZED}ENEMYTYPE;
 
 
 
@@ -38,7 +39,4 @@ typedef struct {
 
         SHIPTYPE type;
 
-
-
-
-}ship;
+}playerShip;

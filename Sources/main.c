@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <time.h>
 
+
 #include "coldetect.h"
 #ifndef STRUCTS_H
 #include "structs.h"
@@ -29,7 +30,7 @@
 #include "shooting.h"
 #endif
 
-
+#define PI 3.14
 #define WIDTH 600
 #define HEIGHT 900
 #define FPS 60
@@ -60,6 +61,19 @@ int main(void) {
     int gameFPS = 0;
     int enemyDensity = 27;
     int densityCounter = 0;
+    int enemyDeath = 0;
+
+    int spawnCredentials[][2] = {
+        {0,10},
+        {10,5},
+        {25,7},
+        {40,10},
+        {70,14}
+/*
+First dimension indicates enemy type, first element of the second dimension indicates elimination
+treshold for making it spawnable and second element indicates spawn randomness of that type
+*/
+    };
 
 
     /*=============================
@@ -79,9 +93,9 @@ int main(void) {
     /*=============================
     GAME VARIABLES
     =============================*/
-    ship player;
+    playerShip player;
     sprite thruster,laserSpr,laserExpSpr;
-    sprite enemyLsrSpr,enemyLsrExpSpr;
+    sprite enemyLsrSpr,enemyLsrExpSpr, enemyMissileSpr;
     /*sprite laserSpr;*/
     bullet *laser = NULL;
     background bg, fg;
@@ -126,14 +140,18 @@ int main(void) {
     laserInstance = al_create_sample_instance(laserSound);
 
 
-    initShip(&player, sheet, NORMAL, BLUE, display);
+    initShip(&player, sheet, DAMAGE, ORANGE, display);
     initAnimation(&thruster, 20, 2, 20, 0,"Resources/redthruster.png");
     initSpriteFromSheet(&laserSpr, 858, 475, 9, 37, 4.5, 0, sheet, display, 1, 0.8);
     initSpriteFromSheet(&laserExpSpr, 740, 724, 37, 37, 13.5, 13.5, sheet, display, 0.5, 0.5);
-    initLaser(laser, MAXLASER, &laserSpr, &laserExpSpr, -1);
+    initLaser(laser, MAXLASER, &laserSpr, &laserExpSpr, -1, 10);
+
     /*----------------------------------------EnemyLaser--------------------------------------------*/
     initSpriteFromSheet(&enemyLsrSpr, 856, 983, 9, 37, 4.5, 0, sheet, display, 1, 0.7);
     initSpriteFromSheet(&enemyLsrExpSpr, 580, 661, 48, 46, 24, 23, sheet, display, 0.5, 0.5);
+
+    initSpriteFromFile(&enemyMissileSpr, 10, 35, "Resources/Missiles/spaceMissiles_001.png", display, 1, 1, PI);
+
 
 
     initBackground(&bg, 0, HEIGHT, 1, 1, 0, 1, "Resources/Background/blueFilled.png");
@@ -150,7 +168,11 @@ int main(void) {
     for (i=0; i<MAXENEMY; i++) {
         enemy[i] = (enemyShip*)malloc(sizeof(enemyShip));
         enemy[i]->spr.image = NULL;
-        initEnemyShip(enemy[i], sheet, display, &enemyLsrSpr, &enemyLsrExpSpr, laserInstance);
+        enemy[i]->laser = NULL;
+        enemy[i]->missile = NULL;
+        enemy[i]->type = NOT_INITIALIZED;
+        initEnemyShip(enemy[i], sheet, display, &enemyLsrSpr, &enemyMissileSpr, &enemyLsrExpSpr, laserInstance,
+                      enemyDeath, spawnCredentials);
     }
 
 
@@ -313,8 +335,8 @@ int main(void) {
                 setState(&gameState, GAMEOVER, &bgmID);
 
             updateLaser(laser, MAXLASER, HEIGHT);
-            updateEnemyShip(enemy, MAXENEMY, WIDTH, HEIGHT, enemyDensity, &densityCounter, sheet, display,
-                            &enemyLsrSpr, &enemyLsrExpSpr, laserInstance);
+            updateEnemyShip(enemy, &player, MAXENEMY, WIDTH, HEIGHT, enemyDensity, &densityCounter, sheet, display,
+                            &enemyLsrSpr, &enemyMissileSpr, &enemyLsrExpSpr, laserInstance, enemyDeath, spawnCredentials);
             updateBackground(&bg, HEIGHT);
             updateBackground(&fg, HEIGHT);
 
@@ -329,14 +351,14 @@ int main(void) {
             setState(&gameState, GAMEOVER, &bgmID);
 
 
-/*==============================================Player collision with laser================================================
+/*==============================================Player collision with laser================================================*/
 
             for (i=0; i<MAXENEMY; i++) {
-                if(enemy[i]->type == FIRING_STATIC) {
+                if(enemy[i]->type == FIRING_STATIC || enemy[i]->type == FIRING_DYNAMIC ||  enemy[i]->type == FOLLOWING_DYNAMIC) {
 
                     for (j=0; j<enemy[i]->laserAmount; j++) {
                         if (enemy[i]->laser[j].live &&
-                                colliding(&player.spr, enemy[i]->laser[j].laserSpr, player.x, player.y,
+                                colliding(&player.spr, enemy[i]->laser[j].spr, player.x, player.y,
                                           enemy[i]->laser[j].x, enemy[i]->laser[j].y)) {
                             enemy[i]->laser[j].live =false;
                             player.lives -= 1;
@@ -348,18 +370,40 @@ int main(void) {
                 }
             }
 
-------------------------------------------------------------------------------------------------------------------------------*/
+/*------------------------------------------------------------------------------------------------------------------------------*/
+
+/*==============================================Player collision with missile================================================*/
+
+            for (i=0; i<MAXENEMY; i++) {
+                if(enemy[i]->type == MISSILE_STATIC) {
+
+                    for (j=0; j<enemy[i]->ammo; j++) {
+                        if (enemy[i]->missile[j].live &&
+                                colliding(&player.spr, enemy[i]->missile[j].spr, player.x, player.y,
+                                          enemy[i]->missile[j].x, enemy[i]->missile[j].y)) {
+                            enemy[i]->missile[j].live =false;
+                            player.lives -= 1;
+                            enemy[i]->missile[j].exploding = true;
+                            enemy[i]->missile[j].explosionSpr->current = 0;
+                            break;
+                        }
+                    }
+                }
+            }
+
+/*------------------------------------------------------------------------------------------------------------------------------*/
 
 /*==============================================Enemy collision with laser================================================*/
 
             for (i=0; i<MAXENEMY; i++) {
                 for (j=0; j<MAXLASER; j++) {
-                    if (enemy[i]->live && laser[j].live &&
+                    if (enemy[i]->type != NOT_INITIALIZED && enemy[i]->live && laser[j].live &&
                             colliding(&enemy[i]->spr, &laserSpr, enemy[i]->x, enemy[i]->y, laser[j].x, laser[j].y)) {
                         laser[j].live =false;
                         enemy[i]->live = false;
                         laser[j].exploding = true;
                         laser[j].explosionSpr->current = 0;
+                        enemyDeath++;
                         break;
                     }
                 }
@@ -369,13 +413,13 @@ int main(void) {
 
 /*==============================================Enemy collision with ship================================================*/
             for (i=0; i<MAXENEMY; i++) {
-                if (enemy[i]->y+enemy[i]->spr.h > player.bound && enemy[i]->live) {
+                if (enemy[i]->y+enemy[i]->spr.h > player.bound && enemy[i]->type != NOT_INITIALIZED && enemy[i]->live) {
                     /*if enemies are not inside of ship bound they can't collide*/
                     if (colliding(&player.spr, &enemy[i]->spr,/*giving upper left corners for all of the sprites*/
                                   player.x - player.spr.w/2, player.y - player.spr.h/2, enemy[i]->x, enemy[i]->y)) {
                         enemy[i]->live=false;
                         player.lives--;
-
+                        enemyDeath++;
                     }
                 }
             }
@@ -398,12 +442,18 @@ int main(void) {
 
             drawBackground(&bg);
             drawBackground(&fg);
+
             al_draw_textf(arial18, al_map_rgb(255,255,255), 0, 0, 0, "FPS:%d",gameFPS);
+            al_draw_textf(arial18, al_map_rgb(255,0,255), WIDTH, 0,ALLEGRO_ALIGN_RIGHT, "Eliminations:%d",enemyDeath);
+
             drawAnimation(&thruster,player.x - thruster.drawCenterX, player.y + player.spr.h/2, true);
             drawLaser(laser, MAXLASER);
             for (i=0;i<MAXENEMY;i++) {
-                if (enemy[i]->live && enemy[i]->type == FIRING_STATIC)
+                if ((enemy[i]->type == FIRING_STATIC || enemy[i]->type == FIRING_DYNAMIC || enemy[i]->type == FOLLOWING_DYNAMIC))
                     drawLaser(enemy[i]->laser, enemy[i]->laserAmount);
+
+                else if (enemy[i]->type == MISSILE_STATIC)
+                     drawMissile(enemy[i]->missile, enemy[i]->ammo);
 
             }
             drawEnemyShip(enemy,MAXENEMY);
