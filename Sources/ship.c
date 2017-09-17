@@ -486,17 +486,19 @@ void firingDynamicUpdate(enemyShip *ship, int screenH) {
 void followingDynamicUpdate(enemyShip *ship, playerShip *player, int screenH) {
 
     ship->y += ship->speedY;
-    if  ( (ship->x + ship->spr.w*ship->spr.scaleX) < (player->x - player->spr.w*player->spr.scaleX) )
+
+
+    if  (player->x > ship->x+ship->spr.w/2*ship->spr.scaleX)
         /*if right side of the enemy ship is more left than the player's left side*/
         ship->followingDirection = 1;
 
-    else if  ( (ship->x - ship->spr.w*ship->spr.scaleX) > (player->x + player->spr.w*player->spr.scaleX) )
+
+    else if  (player->x < ship->x+ship->spr.w/2*ship->spr.scaleX)
         /*if left side of the enemy ship is more right than the player's left side*/
         ship->followingDirection = -1;
 
-    else if (ship->x + ship->spr.w/2*ship->spr.scaleX == player->x + player->spr.w/2*player->spr.scaleX)
-    /*if enemy is head to head with player*/
-        ship->followingDirection = 0;
+    else if (player->x == ship->x+ship->spr.w/2*ship->spr.scaleX)
+         ship->followingDirection = 0;
 
     ship->x += ship->followingDirection * ship->speedX;
 

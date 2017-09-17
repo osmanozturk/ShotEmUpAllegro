@@ -79,10 +79,10 @@ int main(void) {
 
     int spawnCredentials[][2] = {
         {110,8},
-        {110,7},
-        {215,10},
-        {0,12},
-        {70,15}
+        {1110,7},
+        {1125,10},
+        {1140,12},
+        {0,5}
 /*
 First dimension indicates enemy type, first element of the second dimension indicates elimination
 treshold for making it spawnable and second element indicates spawn randomness of that type
@@ -480,6 +480,7 @@ treshold for making it spawnable and second element indicates spawn randomness o
                     if (colliding(&player.spr, &enemy[i]->spr,/*giving upper left corners for all of the sprites*/
                                   player.x - player.spr.w/2, player.y - player.spr.h/2, enemy[i]->x, enemy[i]->y)) {
                         enemy[i]->live=false;
+                        player.lives -=1;
                         enemy[i]->lives=0; /*collision kills instantly*/
                     }
                 }
