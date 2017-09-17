@@ -486,6 +486,7 @@ treshold for making it spawnable and second element indicates spawn randomness o
                 }
             }
 /*==============================================Enemy collision with ship================================================*/
+
                 /*=============================
                       RENDERING OPERATIONS
                 =============================*/
@@ -508,6 +509,7 @@ treshold for making it spawnable and second element indicates spawn randomness o
             al_draw_textf(arial18, al_map_rgb(255,255,255), 0, 0, 0, "FPS:%d",gameFPS);
             al_draw_textf(arial18, al_map_rgb(255,0,255), WIDTH, 0,ALLEGRO_ALIGN_RIGHT, "Eliminations:%d",enemyDeath);
             al_draw_textf(arial18, al_map_rgb(255,0,255), WIDTH, 20,ALLEGRO_ALIGN_RIGHT, "Score:%d",score);
+            al_draw_textf(arial18, al_map_rgb(255,0,255), WIDTH, 40,ALLEGRO_ALIGN_RIGHT, "Lives:%d",player.lives);
 
             drawAnimation(&thruster,player.x - thruster.drawCenterX, player.y + player.spr.h/2, true);
             drawLaser(laser, MAXLASER);
