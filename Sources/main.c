@@ -78,11 +78,11 @@ int main(void) {
 
 
     int spawnCredentials[][2] = {
-        {110,8},
-        {1110,7},
-        {1125,10},
-        {1140,12},
-        {0,5}
+        {0,8},
+        {10,7},
+        {25,10},
+        {40,12},
+        {70,15}
 /*
 First dimension indicates enemy type, first element of the second dimension indicates elimination
 treshold for making it spawnable and second element indicates spawn randomness of that type
