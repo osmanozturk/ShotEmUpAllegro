@@ -75,8 +75,6 @@ int main(void) {
     int currUsernamelen = 0;
     char* boardname = "scoreboard.txt";
 
-
-
     int spawnCredentials[][2] = {
         {0,8},
         {10,7},
