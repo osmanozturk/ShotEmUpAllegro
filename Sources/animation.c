@@ -80,7 +80,8 @@ void initSpriteFromSheet(sprite *spr, int posX, int posY, int w, int h,
 
 void initAnimation(sprite *spr, int maxF, int delayTick, float drawCenterX, float drawCenterY, char filename[]) {
 
-    spr->image = al_load_bitmap(filename);
+    if (filename != NULL)
+        spr->image = al_load_bitmap(filename);
     spr->delayTick = delayTick;
     spr->maxFrame = maxF;
     spr->w = al_get_bitmap_width(spr->image)/maxF;

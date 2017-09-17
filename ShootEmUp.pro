@@ -11,7 +11,8 @@ SOURCES += \
     Sources/coldetect.c \
     Sources/main.c \
     Sources/ship.c \
-    Sources/shooting.c
+    Sources/shooting.c \
+    Sources/ui.c
 
 DISTFILES += \
     Resources/Font/arial.ttf \
@@ -28,7 +29,8 @@ HEADERS += \
     Headers/coldetect.h \
     Headers/ship.h \
     Headers/shooting.h \
-    Headers/structs.h
+    Headers/structs.h \
+    Headers/ui.h
 
 
 LIBS += -L/usr/lib \

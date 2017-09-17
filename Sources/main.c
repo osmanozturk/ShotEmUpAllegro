@@ -10,6 +10,7 @@
 #include <allegro5/allegro_acodec.h>
 
 #include <stdlib.h>
+#include <ctype.h>
 #include <time.h>
 
 
@@ -30,6 +31,10 @@
 #include "shooting.h"
 #endif
 
+#ifndef UI_H
+#include "ui.h"
+#endif
+
 #define PI 3.14
 #define WIDTH 600
 #define HEIGHT 900
@@ -38,9 +43,11 @@
 #define LASERDELAY 15
 #define MAXENEMY 30
 #define MAXTYPE 5
+#define TOPLIST 10
+#define USERNAMELEN 8
 /*typedef enum  { false,true }bool;*/
 
-enum KEYS{ UP, DOWN, LEFT, RIGHT, SPACE, ESC } ;
+enum KEYS{ UP, DOWN, LEFT, RIGHT, SPACE, ESC, ENTER, BACKSPACE } ;
 typedef enum { MENU, GAME, GAMEOVER }STATE;
 
 
@@ -51,7 +58,7 @@ int main(void) {
 
     /*variables*/
     bool redraw = false;
-    bool pressed[6] = {false,false,false,false,false,false};
+    bool pressed[8] = {false,false,false,false,false,false,false, false};
     int gameState = -1;
     int laserDelayCount = 0;
     bool destroyed = false;
@@ -62,13 +69,20 @@ int main(void) {
     int enemyDensity = 27;
     int densityCounter = 0;
     int enemyDeath = 0;
+    int score = 0;
+    char textInput;
+    char *username = NULL;
+    int currUsernamelen = 0;
+    char* boardname = "scoreboard.txt";
+
+
 
     int spawnCredentials[][2] = {
-        {0,10},
-        {10,5},
-        {25,7},
-        {40,10},
-        {70,14}
+        {110,8},
+        {110,7},
+        {215,10},
+        {0,12},
+        {70,15}
 /*
 First dimension indicates enemy type, first element of the second dimension indicates elimination
 treshold for making it spawnable and second element indicates spawn randomness of that type
@@ -84,22 +98,23 @@ treshold for making it spawnable and second element indicates spawn randomness o
     ALLEGRO_EVENT_QUEUE *eventQ = NULL;
     ALLEGRO_EVENT input; /*for inputs and fps timer*/
     ALLEGRO_BITMAP *sheet = NULL;
-    ALLEGRO_FONT  *arial18 = NULL;
+    ALLEGRO_FONT  *arial18 = NULL, *boldArial18 = NULL;
 
     ALLEGRO_SAMPLE *laserSound, *bgm;
     ALLEGRO_SAMPLE_INSTANCE *laserInstance;
     ALLEGRO_SAMPLE_ID bgmID;
 
+
     /*=============================
     GAME VARIABLES
     =============================*/
     playerShip player;
-    sprite thruster,laserSpr,laserExpSpr;
+    sprite thruster,laserSpr,laserExpSpr, beamSpr;
     sprite enemyLsrSpr,enemyLsrExpSpr, enemyMissileSpr;
     /*sprite laserSpr;*/
     bullet *laser = NULL;
     background bg, fg;
-
+    scoreboard *board;
     enemyShip **enemy = NULL;
 
 
@@ -128,8 +143,14 @@ treshold for making it spawnable and second element indicates spawn randomness o
     eventQ = al_create_event_queue();
     sheet = al_load_bitmap("Resources/sheet.png");
     arial18 = al_load_font("Resources/Font/arial.ttf",18,0);
+    boldArial18 = al_load_font("Resources/Font/Arial Bold.ttf",18,0);
     laser = (bullet*)malloc(sizeof(bullet)*MAXLASER);
     enemy = (enemyShip**)malloc(sizeof(enemyShip*)*MAXENEMY);
+    board = (scoreboard*)malloc(sizeof(scoreboard));
+    username = (char*)malloc(sizeof(char)*USERNAMELEN+1); /* +1 for null*/
+    username[0] = '\0';
+
+
 
 
 
@@ -140,7 +161,7 @@ treshold for making it spawnable and second element indicates spawn randomness o
     laserInstance = al_create_sample_instance(laserSound);
 
 
-    initShip(&player, sheet, DAMAGE, ORANGE, display);
+    initShip(&player, sheet, NORMAL, RED, display, &beamSpr);
     initAnimation(&thruster, 20, 2, 20, 0,"Resources/redthruster.png");
     initSpriteFromSheet(&laserSpr, 858, 475, 9, 37, 4.5, 0, sheet, display, 1, 0.8);
     initSpriteFromSheet(&laserExpSpr, 740, 724, 37, 37, 13.5, 13.5, sheet, display, 0.5, 0.5);
@@ -149,13 +170,13 @@ treshold for making it spawnable and second element indicates spawn randomness o
     /*----------------------------------------EnemyLaser--------------------------------------------*/
     initSpriteFromSheet(&enemyLsrSpr, 856, 983, 9, 37, 4.5, 0, sheet, display, 1, 0.7);
     initSpriteFromSheet(&enemyLsrExpSpr, 580, 661, 48, 46, 24, 23, sheet, display, 0.5, 0.5);
-
     initSpriteFromFile(&enemyMissileSpr, 10, 35, "Resources/Missiles/spaceMissiles_001.png", display, 1, 1, PI);
 
-
-
+    initSpriteFromSheet(&beamSpr, 858, 230, 9, 54, 4.5, 9*5, sheet, display, 1,5);
+    initAnimation(&beamSpr, 1, 240, 4.5, 9*5, NULL);
     initBackground(&bg, 0, HEIGHT, 1, 1, 0, 1, "Resources/Background/blueFilled.png");
     initBackground(&fg, 0, HEIGHT, 1, 1, 0, 2, "Resources/Background/starfieldVFilled.png");
+    initScoreboard(board, TOPLIST, USERNAMELEN);
     /*initEnemyShip(enemy, MAXENEMY, sheet, display);*/
 
     al_set_sample_instance_gain(laserInstance, 0.35);
@@ -196,39 +217,77 @@ treshold for making it spawnable and second element indicates spawn randomness o
     while (gameState == MENU) {
         al_wait_for_event(eventQ, &input);
         al_draw_text(arial18, al_map_rgb(0,0,255), WIDTH/2, HEIGHT/2,
-                     ALLEGRO_ALIGN_CENTER, "PRESS SPACE TO START GAME");
+                     ALLEGRO_ALIGN_CENTER, "ENTER YOUR USERNAME TO START THE GAME");
+        if (username != NULL) {
+            al_draw_text(arial18, al_map_rgb(255,255,255), WIDTH/2, HEIGHT/2 + 150,
+                          ALLEGRO_ALIGN_CENTER, username); /*Drawing username*/
+        }
         al_flip_display();
         al_clear_to_color(al_map_rgb(0,0,0));
 
-        if (input.type == ALLEGRO_EVENT_KEY_DOWN) {
-            switch (input.keyboard.keycode) {
+        switch (input.type) {
+        case ALLEGRO_EVENT_KEY_DOWN:
 
-            case ALLEGRO_KEY_SPACE:
-                pressed[SPACE] = true;
+            switch (input.keyboard.keycode) {
+            case ALLEGRO_KEY_ENTER:
+                pressed[ENTER] = true;
                 break;
             case ALLEGRO_KEY_ESCAPE:
                 pressed[ESC] = true;
                 break;
-            }
-        }
+            case ALLEGRO_KEY_BACKSPACE:
+                pressed[BACKSPACE] = true;
+                if (currUsernamelen >= 0) {
+                    username[currUsernamelen] = '\0';
+                    currUsernamelen-=1;
+                }
 
-        else if (input.type == ALLEGRO_EVENT_KEY_UP) {
+                break;
+            default:
+                break;
+            }
+
+            break;
+
+        case ALLEGRO_EVENT_KEY_UP:
             switch (input.keyboard.keycode) {
 
-            case ALLEGRO_KEY_SPACE:
-                pressed[SPACE] = false;
+            case ALLEGRO_KEY_ENTER:
+                pressed[ENTER] = false;
                 break;
             case ALLEGRO_KEY_ESCAPE:
                 pressed[ESC] = false;
                 break;
+            case ALLEGRO_KEY_BACKSPACE:
+                pressed[BACKSPACE] = false;
+                break;
+            default:
+                break;
             }
-        }
 
-        if (pressed[SPACE])
+            break;
+
+        case ALLEGRO_EVENT_KEY_CHAR:
+            textInput = input.keyboard.unichar;
+            if (isalpha(textInput) && currUsernamelen < USERNAMELEN) {
+                /*If input contains characters*/
+                username[currUsernamelen] = textInput;
+                username[currUsernamelen+1] = '\0';
+                currUsernamelen+=1;
+            }
+            break;
+
+        default:
+            break;
+}
+
+        if (pressed[ENTER] && currUsernamelen > 0)
             setState(&gameState, GAME, &bgmID);
 
         else if (pressed[ESC])
             setState(&gameState, GAMEOVER, &bgmID);
+
+
     }
 
 
@@ -358,12 +417,12 @@ treshold for making it spawnable and second element indicates spawn randomness o
 
                     for (j=0; j<enemy[i]->laserAmount; j++) {
                         if (enemy[i]->laser[j].live &&
-                                colliding(&player.spr, enemy[i]->laser[j].spr, player.x, player.y,
-                                          enemy[i]->laser[j].x, enemy[i]->laser[j].y)) {
-                            enemy[i]->laser[j].live =false;
-                            player.lives -= 1;
+                                colliding(&player.spr, enemy[i]->laser[j].spr, player.x-player.spr.drawCenterX,
+                                          player.y-player.spr.drawCenterY, enemy[i]->laser[j].x, enemy[i]->laser[j].y)) {
                             enemy[i]->laser[j].exploding = true;
                             enemy[i]->laser[j].explosionSpr->current = 0;
+                            player.lives -= 1;
+                            enemy[i]->laser[j].live =false;
                             break;
                         }
                     }
@@ -379,8 +438,8 @@ treshold for making it spawnable and second element indicates spawn randomness o
 
                     for (j=0; j<enemy[i]->ammo; j++) {
                         if (enemy[i]->missile[j].live &&
-                                colliding(&player.spr, enemy[i]->missile[j].spr, player.x, player.y,
-                                          enemy[i]->missile[j].x, enemy[i]->missile[j].y)) {
+                                colliding(&player.spr, enemy[i]->missile[j].spr, player.x-player.spr.drawCenterX,
+                                          player.y - player.spr.drawCenterY, enemy[i]->missile[j].x, enemy[i]->missile[j].y)) {
                             enemy[i]->missile[j].live =false;
                             player.lives -= 1;
                             enemy[i]->missile[j].exploding = true;
@@ -400,10 +459,13 @@ treshold for making it spawnable and second element indicates spawn randomness o
                     if (enemy[i]->type != NOT_INITIALIZED && enemy[i]->live && laser[j].live &&
                             colliding(&enemy[i]->spr, &laserSpr, enemy[i]->x, enemy[i]->y, laser[j].x, laser[j].y)) {
                         laser[j].live =false;
-                        enemy[i]->live = false;
+                        enemy[i]->lives -=1;
+                        if (enemy[i]->lives == 0) {
+                            enemyDeath+=1;
+                            score+=enemy[i]->scorePts;
+                        }
                         laser[j].exploding = true;
                         laser[j].explosionSpr->current = 0;
-                        enemyDeath++;
                         break;
                     }
                 }
@@ -418,8 +480,7 @@ treshold for making it spawnable and second element indicates spawn randomness o
                     if (colliding(&player.spr, &enemy[i]->spr,/*giving upper left corners for all of the sprites*/
                                   player.x - player.spr.w/2, player.y - player.spr.h/2, enemy[i]->x, enemy[i]->y)) {
                         enemy[i]->live=false;
-                        player.lives--;
-                        enemyDeath++;
+                        enemy[i]->lives=0; /*collision kills instantly*/
                     }
                 }
             }
@@ -445,6 +506,7 @@ treshold for making it spawnable and second element indicates spawn randomness o
 
             al_draw_textf(arial18, al_map_rgb(255,255,255), 0, 0, 0, "FPS:%d",gameFPS);
             al_draw_textf(arial18, al_map_rgb(255,0,255), WIDTH, 0,ALLEGRO_ALIGN_RIGHT, "Eliminations:%d",enemyDeath);
+            al_draw_textf(arial18, al_map_rgb(255,0,255), WIDTH, 20,ALLEGRO_ALIGN_RIGHT, "Score:%d",score);
 
             drawAnimation(&thruster,player.x - thruster.drawCenterX, player.y + player.spr.h/2, true);
             drawLaser(laser, MAXLASER);
@@ -476,43 +538,67 @@ treshold for making it spawnable and second element indicates spawn randomness o
     =============================*/
 
 
+    i=0;
     while (gameState == GAMEOVER) {
         al_wait_for_event(eventQ, &input);
         al_draw_text(arial18, al_map_rgb(255,0,0), WIDTH/2, HEIGHT/2, ALLEGRO_ALIGN_CENTER, "GAME IS NOW OVER");
         al_flip_display();
         al_clear_to_color(al_map_rgb(0,0,0));
 
-        if ( (input.type == ALLEGRO_EVENT_DISPLAY_CLOSE) && !destroyed){
-
-            al_destroy_display(display);
-            al_destroy_event_queue(eventQ);
-            al_destroy_timer(timer);
-            al_destroy_bitmap(sheet);
-            al_destroy_bitmap(player.spr.image);
-            al_destroy_bitmap(thruster.image);
-            al_destroy_bitmap(laserSpr.image);
-            al_destroy_bitmap(bg.image);
-            al_destroy_bitmap(fg.image);
-            al_destroy_font(arial18);
-
-            al_destroy_sample(bgm);
-            al_destroy_sample(laserSound);
-            al_destroy_sample_instance(laserInstance);
+        if(i==0){/*Running once*/
+            readScoreboard(boardname, board);
+            addToScoreboard(board, score, username);
+            writeScoreboard(boardname, board);
+            i++;
+        }
+        drawScoreboard(board, arial18, boldArial18, WIDTH/2, HEIGHT/2+100);
+        if ( input.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
 
 
 
-            /*============================*/
-            free(laser);
-            for (i=0; i<MAXENEMY; i++) {
-                free(enemy[i]->laser);
-                free(enemy[i]);
+            if (!destroyed) {
+
+                al_destroy_display(display);
+                al_destroy_event_queue(eventQ);
+                al_destroy_timer(timer);
+                al_destroy_bitmap(sheet);
+                al_destroy_bitmap(player.spr.image);
+                al_destroy_bitmap(thruster.image);
+                al_destroy_bitmap(laserSpr.image);
+                al_destroy_bitmap(bg.image);
+                al_destroy_bitmap(fg.image);
+                al_destroy_font(arial18);
+                al_destroy_font(boldArial18);
+
+                al_destroy_sample(bgm);
+                al_destroy_sample(laserSound);
+                al_destroy_sample_instance(laserInstance);
+
+
+
+                /*============================*/
+                free(laser);
+                for (i=0; i<MAXENEMY; i++) {
+                    free(enemy[i]->laser);
+                    free(enemy[i]);
+                }
+                free(enemy);
+                for (i=0;i<board->maxLength;i++) {
+                    free(board->usernames[i]);
+                }
+                free(board->usernames);
+                destroyed = true;
+                printf("everything destroyed\n");
+                break;
             }
-            free(enemy);
-            destroyed = true;
-            printf("everything destroyed\n");
-            break;
             /*Breaking from gameover loop for ending the game properly*/
 
+        }
+
+        else if (input.type == ALLEGRO_EVENT_KEY_DOWN) {
+            if (input.keyboard.keycode == ALLEGRO_KEY_R) {
+                setState(&gameState, GAME, &bgmID);
+            }
         }
     }
 
@@ -530,19 +616,16 @@ void setState (int *gameState, int targetState, ALLEGRO_SAMPLE_ID *bgmID) {
     switch (*gameState) {
     case MENU:
         printf("exiting menu\n");
-
-
         break;
 
     case GAME:
         printf("exiting game\n");
-
-
         break;
 
     case GAMEOVER:
         printf("exiting gameover\n");
         break;
+
     default:
         break;
     }

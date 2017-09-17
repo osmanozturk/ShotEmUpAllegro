@@ -37,10 +37,10 @@ bool colliding(sprite *s1, sprite *s2, int x1, int y1, int x2, int y2) {
     =========================================*/
 
 
-    if ((x1 > x2 + s2->w - 1) ||
-        (y1 > y2 + s2->h - 1) ||
-        (x2 > x1 + s1->w - 1) ||
-        (y2 > y1 + s1->h - 1))
+    if ((x1 > x2 + s2->w*s2->scaleX - 1) ||
+        (y1 > y2 + s2->h*s2->scaleY - 1) ||
+        (x2 > x1 + s1->w*s1->scaleX - 1) ||
+        (y2 > y1 + s1->h*s1->scaleY - 1))
     {
 
         return false;
@@ -49,9 +49,9 @@ bool colliding(sprite *s1, sprite *s2, int x1, int y1, int x2, int y2) {
     else {
         /* box collision*/
         top = max(y1, y2);
-        bottom = min(y1 + s1->w, y2 + s2->w);
+        bottom = min(y1 + s1->w*s1->scaleX, y2 + s2->w*s2->scaleX);
         left = max(x1, x2);
-        right = min(x1 + s1->w, x2 + s2->w);
+        right = min(x1 + s1->w*s1->scaleX, x2 + s2->w*s2->scaleX);
 
 
         /*====================================================================================================

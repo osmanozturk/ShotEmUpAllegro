@@ -17,6 +17,7 @@
 #endif
 
 
+
 /*====================================================================================================
 Initializing ship from one huge spritesheet, got sheet coordinates from its xml file,
 xml parsing will be used in the future instead of writing with hand, creating a bitmap
@@ -26,7 +27,8 @@ There is three ship types and 4 different colors for each type
 ====================================================================================================*/
 
 
-void initShip(playerShip *ship, ALLEGRO_BITMAP *sheet,  SHIPTYPE type, SHIPCOLOR color, ALLEGRO_DISPLAY *display) {
+void initShip(playerShip *ship, ALLEGRO_BITMAP *sheet,  SHIPTYPE type, SHIPCOLOR color, ALLEGRO_DISPLAY *display,
+              sprite *beamSpr) {
     int width = al_get_display_width(display);
     int height = al_get_display_height(display);
 
@@ -73,6 +75,10 @@ void initShip(playerShip *ship, ALLEGRO_BITMAP *sheet,  SHIPTYPE type, SHIPCOLOR
         ship->speed = 10;
         ship->bound = height * 5 / 8;
         ship->lives = 3;
+
+        ship->beam = (bullet*)malloc(sizeof(bullet)); /*Superpower laser beam is just one laser*/
+        initLaser(ship->beam, 1, beamSpr, NULL, 1,0);
+
 
         switch (color) {
         case BLUE:
@@ -199,7 +205,8 @@ void initEnemyShip(enemyShip *ship, ALLEGRO_BITMAP *sheet, ALLEGRO_DISPLAY *disp
     switch (ship->type) {
 
     case STATIC:
-
+        ship->scorePts = 1;
+        ship->lives = 3;
         ship->live = false;
         ship->spr.w = 82;
         ship->spr.h = 84;
@@ -217,7 +224,8 @@ void initEnemyShip(enemyShip *ship, ALLEGRO_BITMAP *sheet, ALLEGRO_DISPLAY *disp
         break;
 
     case FIRING_STATIC:
-
+        ship->scorePts = 2;
+        ship->lives = 3;
         ship->live = false;
         ship->spr.w = 103;
         ship->spr.h = 84;
@@ -244,7 +252,8 @@ void initEnemyShip(enemyShip *ship, ALLEGRO_BITMAP *sheet, ALLEGRO_DISPLAY *disp
         break;
 
     case FIRING_DYNAMIC:
-
+        ship->scorePts = 3;
+        ship->lives = 3;
         ship->live = false;
         ship->spr.w = 97;
         ship->spr.h = 84;
@@ -272,6 +281,8 @@ void initEnemyShip(enemyShip *ship, ALLEGRO_BITMAP *sheet, ALLEGRO_DISPLAY *disp
         break;
 
     case MISSILE_STATIC:
+        ship->scorePts = 5;
+        ship->lives = 3;
         ship->live = false;
         ship->spr.w = 104;
         ship->spr.h = 84;
@@ -299,6 +310,8 @@ void initEnemyShip(enemyShip *ship, ALLEGRO_BITMAP *sheet, ALLEGRO_DISPLAY *disp
                             ship->spr.w/2, ship->spr.h/2, sheet, display, 0.7, 0.7);
         break;
     case FOLLOWING_DYNAMIC:
+        ship->scorePts = 6;
+        ship->lives = 3;
         ship->live = false;
         ship->spr.w = 93;
         ship->spr.h = 84;
@@ -325,7 +338,6 @@ void initEnemyShip(enemyShip *ship, ALLEGRO_BITMAP *sheet, ALLEGRO_DISPLAY *disp
                             ship->spr.w/2, ship->spr.h/2, sheet, display, 0.7, 0.7);
         break;
 
-        break;
     default:
         break;
     }
@@ -378,6 +390,9 @@ int i,random;
         default:
             break;
         }
+        if (ship[i]->lives == 0) {
+            ship[i]->live = false;
+        }
 
         if (!ship[i]->live && ship[i]->y > screenH && random  && *densityCounter >= enemyDensity ) {
             /*screenh rule prevents instant respawning*/
@@ -385,6 +400,7 @@ int i,random;
 
             ship[i]->y = - (ship[i]->spr.h)/2;
             ship[i]->x = ( (rand() % (screenW - 2*ship[i]->spr.w)) +ship[i]->spr.w );
+            ship[i]->lives = 3;
             ship[i]->live = true;
             *densityCounter = 0;
 

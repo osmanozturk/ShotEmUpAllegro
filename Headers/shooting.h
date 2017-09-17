@@ -28,6 +28,7 @@ typedef struct {
 }bullet;
 
 
+
 /*====================================================================================================
 Initializes lasers as false and assigns speed values
 ====================================================================================================*/
@@ -76,7 +77,7 @@ void initMissile (bullet missile[], int amount, sprite *missileSpr, sprite *expl
 
 
 /*====================================================================================================
-shoots missile according to given delay actual shooting and following process is handling by
+Shoots missile according to given delay actual shooting and following process is handling by
 updatemissile this function simply just creates them
 ====================================================================================================*/
 

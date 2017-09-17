@@ -25,7 +25,7 @@ typedef struct {
         int pathCounter;
         int spawnTreshold;
         int followingDirection;
-
+        int scorePts;
         sprite spr, *laserSpr, *explosionSpr;
         ENEMYTYPE type;
         bullet *laser;
@@ -35,6 +35,21 @@ typedef struct {
 }enemyShip;
 
 
+typedef struct {
+        int speed;
+        int x, y;
+        bool live;
+        int ammo;
+        int bound;
+        int lives;
+        bool spawnable;
+
+
+        sprite spr;
+        bullet *beam;/*superpower*/
+        SHIPTYPE type;
+
+}playerShip;
 
 enum { TRESHOLD , RANDOMNESS };
 
@@ -48,7 +63,7 @@ will be used inside that function, ship type and color will be selectable from m
 This header will also contain enemy ship operations
 ====================================================================================================*/
 
-void initShip(playerShip *ship, ALLEGRO_BITMAP *sheet , SHIPTYPE type, SHIPCOLOR color, ALLEGRO_DISPLAY *display);
+void initShip(playerShip *ship, ALLEGRO_BITMAP *sheet , SHIPTYPE type, SHIPCOLOR color, ALLEGRO_DISPLAY *display, sprite *beamSpr);
 
 
 

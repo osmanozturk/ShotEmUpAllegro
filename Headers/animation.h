@@ -17,6 +17,9 @@ typedef struct {
 
 }background;
 
+
+
+
 /*====================================================================================================
 Initializes single frame sprite from given file
 ====================================================================================================*/
@@ -38,6 +41,7 @@ void initSpriteFromSheet(sprite *spr, int posX, int posY, int w, int h,
 /*====================================================================================================
 Initializes animation sprite with desired frame delay value, spritesheet must contain single row
 Delaytick is in frames game runs at 60fps delay value should be calculated considering this
+if filename field left as Null it will only manipulate animation values and not initialize bitmap
 ====================================================================================================*/
 
 void initAnimation(sprite *spr, int maxF, int delayTick, float drawCenterX, float drawCenterY, char filename[]);

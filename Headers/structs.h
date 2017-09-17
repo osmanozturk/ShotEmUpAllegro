@@ -4,13 +4,15 @@
 #endif /* STRUCTS_H*/
 
 #include <allegro5/allegro.h>
+#include <allegro5/allegro_audio.h>
+#include <allegro5/allegro_acodec.h>
+
+
 
 typedef enum  { DAMAGE, FAST, NORMAL}SHIPTYPE;
 typedef enum  { BLUE, GREEN, ORANGE, RED}SHIPCOLOR;
 typedef enum  { STATIC, FIRING_STATIC, FIRING_DYNAMIC,
                 MISSILE_STATIC, FOLLOWING_DYNAMIC, NOT_INITIALIZED}ENEMYTYPE;
-
-
 
 typedef struct {
         int maxFrame;
@@ -23,20 +25,3 @@ typedef struct {
         ALLEGRO_BITMAP *image;
 }sprite;
 
-
-
-typedef struct {
-        int speed;
-        int x, y;
-        bool live;
-        int ammo;
-        int bound;
-        int lives;
-        bool spawnable;
-
-
-        sprite spr;
-
-        SHIPTYPE type;
-
-}playerShip;
